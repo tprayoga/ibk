@@ -11,7 +11,7 @@ const App = () => {
     <div
   style={{
     fontFamily: 'monospace',
-    fontSize: '8px',
+    fontSize: '4px',
     fontWeight: 'bold',
     whiteSpace: 'pre',
     lineHeight: '1.4',

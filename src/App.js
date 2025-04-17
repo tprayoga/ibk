@@ -1,116 +1,96 @@
 import React, { useEffect, useRef, useState } from "react";
-import "./App.css";
 
 function App() {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
+  const [devices, setDevices] = useState([]);
+  const [selectedDeviceId, setSelectedDeviceId] = useState("");
   const [photo, setPhoto] = useState(null);
 
+  // Dapatkan daftar kamera setelah izin diberikan
   useEffect(() => {
-    const startCamera = async () => {
+    const getDevices = async () => {
       try {
-        // Mendapatkan daftar perangkat media (kamera)
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        const videoDevices = devices.filter((device) => device.kind === "videoinput");
+        // Akses kamera satu kali untuk bisa ambil label
+        await navigator.mediaDevices.getUserMedia({ video: true });
 
-        // Mencari perangkat kamera biasa (RGB), biasanya dengan kata kunci 'color' atau 'rgb' di label
-        const rgbCamera = videoDevices.find((device) => device.label.toLowerCase().includes("color") || device.label.toLowerCase().includes("rgb"));
+        const allDevices = await navigator.mediaDevices.enumerateDevices();
+        const videoDevices = allDevices.filter((device) => device.kind === "videoinput");
+        setDevices(videoDevices);
 
-        if (rgbCamera) {
-          const stream = await navigator.mediaDevices.getUserMedia({
-            video: {
-              deviceId: rgbCamera.deviceId, // Memilih kamera biasa (RGB)
-              width: { ideal: 1280 },
-              height: { ideal: 720 },
-            },
-            audio: false,
-          });
-
-          if (videoRef.current) {
-            videoRef.current.srcObject = stream;
-          }
-        } else {
-          alert("Kamera biasa (RGB) tidak ditemukan!");
+        if (videoDevices.length > 0) {
+          setSelectedDeviceId(videoDevices[0].deviceId);
         }
       } catch (err) {
         alert("Gagal mengakses kamera: " + err.message);
       }
     };
 
-    startCamera();
+    getDevices();
   }, []);
 
-  const handleCapture = () => {
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
+  // Stream video dari kamera terpilih
+  useEffect(() => {
+    const startStream = async () => {
+      if (!selectedDeviceId) return;
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { deviceId: { exact: selectedDeviceId }, width: { ideal: 1280 }, height: { ideal: 720 } },
+          audio: false,
+        });
 
-    if (video && canvas) {
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      setPhoto(canvas.toDataURL("image/png"));
-    }
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+      } catch (err) {
+        alert("Gagal memulai kamera: " + err.message);
+      }
+    };
+
+    startStream();
+  }, [selectedDeviceId]);
+
+  const handleCapture = () => {
+    const canvas = canvasRef.current;
+    const video = videoRef.current;
+    if (!canvas || !video) return;
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    setPhoto(canvas.toDataURL("image/png"));
   };
 
   return (
-    <div style={{ padding: "20px", textAlign: "center", backgroundColor: "#f8f8f8", minHeight: "100vh" }}>
-      <h2>Test Autofokus Kamera</h2>
+    <div style={{ padding: "20px", textAlign: "center" }}>
+      <h2>Pilih Kamera</h2>
 
-      <div style={{ position: "relative", display: "inline-block" }}>
-        <video
-          ref={videoRef}
-          autoPlay
-          playsInline
-          style={{
-            width: "100%",
-            maxWidth: "600px",
-            border: "2px solid #333",
-            borderRadius: "8px",
-          }}
-        />
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
-            gridTemplateRows: "repeat(3, 1fr)",
-            pointerEvents: "none",
-          }}
-        >
-          {[...Array(9)].map((_, i) => (
-            <div key={i} style={{ border: "1px solid rgba(255, 255, 255, 0.3)" }}></div>
+      {devices.length > 0 && (
+        <select value={selectedDeviceId} onChange={(e) => setSelectedDeviceId(e.target.value)} style={{ marginBottom: "20px", padding: "10px" }}>
+          {devices.map((device) => (
+            <option key={device.deviceId} value={device.deviceId}>
+              {device.label || `Kamera ${device.deviceId.slice(-5)}`}
+            </option>
           ))}
-        </div>
+        </select>
+      )}
+
+      <div>
+        <video ref={videoRef} autoPlay playsInline style={{ width: "100%", maxWidth: "600px", border: "1px solid black" }} />
       </div>
 
-      <div style={{ marginTop: "15px" }}>
-        <button
-          onClick={handleCapture}
-          style={{
-            padding: "10px 20px",
-            fontSize: "16px",
-            borderRadius: "5px",
-            border: "none",
-            backgroundColor: "#007bff",
-            color: "#fff",
-            cursor: "pointer",
-          }}
-        >
-          Capture Foto
-        </button>
-      </div>
+      <button onClick={handleCapture} style={{ marginTop: "20px", padding: "10px 20px", fontSize: "16px" }}>
+        Ambil Gambar
+      </button>
 
       <canvas ref={canvasRef} style={{ display: "none" }}></canvas>
 
       {photo && (
         <div style={{ marginTop: "20px" }}>
-          <h3>Hasil Foto:</h3>
-          <img src={photo} alt="Hasil" style={{ maxWidth: "600px", width: "100%", border: "1px solid #ccc", borderRadius: "8px" }} />
+          <h3>Hasil Gambar</h3>
+          <img src={photo} alt="Hasil" style={{ maxWidth: "100%" }} />
         </div>
       )}
     </div>

@@ -1,126 +1,94 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import "./App.css";
 
-const App = () => {
-  const [name, setName] = useState("Printer");
+function App() {
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const [photo, setPhoto] = useState(null);
 
-  const printReceipt = () => {
-    window.print();
+  useEffect(() => {
+    const startCamera = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "environment" },
+          audio: false,
+        });
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+      } catch (err) {
+        alert("Gagal mengakses kamera: " + err.message);
+      }
+    };
+
+    startCamera();
+  }, []);
+
+  const handleCapture = () => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+
+    if (video && canvas) {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      setPhoto(canvas.toDataURL("image/png"));
+    }
   };
 
   return (
-    <div>
-      <div
-        style={{
-          fontFamily: "monospace",
-          fontSize: "8px",
-          fontWeight: "bold",
-          whiteSpace: "pre",
-          lineHeight: 1.4,
-        }}
-      >
-        <div>
-          BADAN PENDAPATAN DAERAH
-          <br />
-          PPPD NO HATTA NO. 528 BANDUNG
-          <br />
-          NOTA PERHITUNGAN PAJAK KENDARAAN BERMOTOR (NPPKB)
-          <br />
-          ----------------------------------------
+    <div style={{ padding: "20px", textAlign: "center", backgroundColor: "#f8f8f8", minHeight: "100vh" }}>
+      <h2>Test Autofokus Kamera</h2>
+
+      <div style={{ position: "relative", display: "inline-block" }}>
+        <video ref={videoRef} autoPlay playsInline style={{ width: "100%", maxWidth: "600px", border: "2px solid #333", borderRadius: "8px" }} />
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            display: "grid",
+            gridTemplateColumns: "repeat(3, 1fr)",
+            gridTemplateRows: "repeat(3, 1fr)",
+            pointerEvents: "none",
+          }}
+        >
+          {[...Array(9)].map((_, i) => (
+            <div key={i} style={{ border: "1px solid rgba(255, 255, 255, 0.3)" }}></div>
+          ))}
         </div>
-        Ket : DUMMY_KODE - DUMMY_LAYANAN
-        <br />
-        Milik Ke : DUMMY_MILIK : DUMMY_TARIF
-        <br />
-        NO.POLISI : AB 123 CD [DUMMY_PLAT] - DUMMY_WILAYAH
-        <br />
-        NAMA : DUMMY_NAME [123456789]
-        <br />
-        ALAMAT : DUMMY_ADDRESS
-        <br />
-        KELURAHAN : DUMMY_KELURAHAN
-        <br />
-        KECAMATAN : DUMMY_KECAMATAN
-        <br />
-        MS. PAJAK : 12-1-2012 - 12-1-2012
-        <br />
-        TGL AKHIR PAJAK LAMA: 12-1-2012
-        <br />
-        TGL AKHIR STNK : 12-1-2012
-        <br />
-        MRK/TYPE : DUMMY_MEREK / DUMMY_MODEL / [BBM]
-        <br />
-        JNS/KD_MRK : DUMMY_JENIS / [123] / 2021
-        <br />
-        RANGKA/MSN : [R123] / [M123]
-        <br />
-        CC/WRN/KFS : [150 CC] / [RED] / (FUNCTION)
-        <br />
-        NJKB/BBT : Rp. 10,000,000 / 1200
-        <br />
-        KETERANGAN 1 : DUMMY_KET1
-        <br />
-        KETERANGAN 2 : DUMMY_KET2
-        <br />
-        KETERANGAN 3 : DUMMY_KET3
-        <br />
-        KODE VOUCHER : VOUCHER_123
-        <br />
-        ----------------------------------------
-        <br />
-        DGN RINCIAN SBB :
-        <br />
-        BBNKB I : 1,000,000 | Denda: 50,000 | Opsen: 10,000
-        <br />
-        BBNKB II : 2,000,000 | Denda: 100,000 | Opsen: 20,000
-        <br />
-        PKB Pokok : 3,000,000 | Denda: 150,000 | Opsen: 30,000
-        <br />
-        PKB Tunggakan 1 : 500,000 | Denda: 25,000 | Opsen: 5,000
-        <br />
-        PKB Tunggakan 2 : 600,000 | Denda: 30,000 | Opsen: 6,000
-        <br />
-        PKB Tunggakan 3 : 700,000 | Denda: 35,000 | Opsen: 7,000
-        <br />
-        PKB Tunggakan 4 : 800,000 | Denda: 40,000 | Opsen: 8,000
-        <br />
-        PKB Tunggakan 5 : 900,000 | Denda: 45,000 | Opsen: 9,000
-        <br />
-        SWDKLLJ : 100,000 | Denda: 5,000 | Opsen: 1,000
-        <br />
-        SWDKLLJ Tunggakan : 50,000 | Denda: 2,500 | Opsen: 500
-        <br />
-        BEA ADM STNK : 75,000
-        <br />
-        BEA ADM TNKB : 80,000
-        <br />
-        ----------------------------------------
-        <br />
-        JUMLAH : Pokok: 10,000,000 | Denda: 500,000 | Opsen: 100,000
-        <br />
-        TOTAL : Rp. 10,500,000
-        <br />
-        ----------------------------------------
-        <br />
-        DITETAPKAN DI : DUMMY_PLACE, DATE
-        <br />
-        PETUGAS PENETAPAN : DUMMY_OFFICER
       </div>
 
-      <button
-        onClick={printReceipt}
-        style={{
-          marginTop: "10px",
-          padding: "6px 12px",
-          fontSize: "12px",
-          cursor: "pointer",
-          fontWeight: "bold",
-          display: "block",
-        }}
-      >
-        Print
-      </button>
+      <div style={{ marginTop: "15px" }}>
+        <button
+          onClick={handleCapture}
+          style={{
+            padding: "10px 20px",
+            fontSize: "16px",
+            borderRadius: "5px",
+            border: "none",
+            backgroundColor: "#007bff",
+            color: "#fff",
+            cursor: "pointer",
+          }}
+        >
+          Capture Foto
+        </button>
+      </div>
+
+      <canvas ref={canvasRef} style={{ display: "none" }}></canvas>
+
+      {photo && (
+        <div style={{ marginTop: "20px" }}>
+          <h3>Hasil Foto:</h3>
+          <img src={photo} alt="Hasil" style={{ maxWidth: "600px", width: "100%", border: "1px solid #ccc", borderRadius: "8px" }} />
+        </div>
+      )}
     </div>
   );
-};
+}
 
 export default App;

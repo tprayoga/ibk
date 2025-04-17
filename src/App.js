@@ -9,10 +9,17 @@ function App() {
   useEffect(() => {
     const startCamera = async () => {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "environment" },
+        // Menambahkan constraints width dan height untuk menghindari masalah hitam putih
+        const constraints = {
+          video: {
+            facingMode: "environment", // Gunakan kamera belakang
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          },
           audio: false,
-        });
+        };
+
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
         }
@@ -42,7 +49,18 @@ function App() {
       <h2>Test Autofokus Kamera</h2>
 
       <div style={{ position: "relative", display: "inline-block" }}>
-        <video ref={videoRef} autoPlay playsInline style={{ width: "100%", maxWidth: "600px", border: "2px solid #333", borderRadius: "8px" }} />
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          style={{
+            width: "100%",
+            maxWidth: "600px",
+            border: "2px solid #333",
+            borderRadius: "8px",
+            transform: "scaleX(-1)",
+          }}
+        />
         <div
           style={{
             position: "absolute",
@@ -84,7 +102,7 @@ function App() {
       {photo && (
         <div style={{ marginTop: "20px" }}>
           <h3>Hasil Foto:</h3>
-          <img src={photo} alt="Hasil" style={{ maxWidth: "600px", width: "100%", border: "1px solid #ccc", borderRadius: "8px" }} />
+          <img src={photo} alt="Hasil" style={{ maxWidth: "600px", width: "100%", border: "1px solid #ccc", borderRadius: "8px", transform: "scaleX(-1)" }} />
         </div>
       )}
     </div>

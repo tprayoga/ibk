@@ -9,19 +9,28 @@ function App() {
   useEffect(() => {
     const startCamera = async () => {
       try {
-        // Menambahkan constraints width dan height untuk menghindari masalah hitam putih
-        const constraints = {
-          video: {
-            facingMode: "environment", // Gunakan kamera belakang
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-          },
-          audio: false,
-        };
+        // Mendapatkan daftar perangkat media (kamera)
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoDevices = devices.filter((device) => device.kind === "videoinput");
 
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
+        // Mencari perangkat kamera biasa (RGB), biasanya dengan kata kunci 'color' atau 'rgb' di label
+        const rgbCamera = videoDevices.find((device) => device.label.toLowerCase().includes("color") || device.label.toLowerCase().includes("rgb"));
+
+        if (rgbCamera) {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              deviceId: rgbCamera.deviceId, // Memilih kamera biasa (RGB)
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+            },
+            audio: false,
+          });
+
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+          }
+        } else {
+          alert("Kamera biasa (RGB) tidak ditemukan!");
         }
       } catch (err) {
         alert("Gagal mengakses kamera: " + err.message);
@@ -58,7 +67,6 @@ function App() {
             maxWidth: "600px",
             border: "2px solid #333",
             borderRadius: "8px",
-            transform: "scaleX(-1)",
           }}
         />
         <div
@@ -102,7 +110,7 @@ function App() {
       {photo && (
         <div style={{ marginTop: "20px" }}>
           <h3>Hasil Foto:</h3>
-          <img src={photo} alt="Hasil" style={{ maxWidth: "600px", width: "100%", border: "1px solid #ccc", borderRadius: "8px", transform: "scaleX(-1)" }} />
+          <img src={photo} alt="Hasil" style={{ maxWidth: "600px", width: "100%", border: "1px solid #ccc", borderRadius: "8px" }} />
         </div>
       )}
     </div>
